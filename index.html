@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nano Apps · Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --panel:#121212;
+    --panel-2:#171717;
+    --panel-3:#0d0d0d;
+    --border:#242424;
+    --border-soft:#1c1c1c;
+    --text:#f3f3f1;
+    --text-dim:#95958f;
+    --text-mute:#5a5a56;
+    --lime:#b6ff3d;
+    --lime-dim:rgba(182,255,61,0.12);
+    --amber:#f5c542;
+    --amber-dim:rgba(245,197,66,0.12);
+    --red:#ef5f5f;
+    --red-dim:rgba(239,95,95,0.12);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:100px;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- top nav ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,10,10,0.85); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
+  }
+  .brand{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--text-dim);}
+  .brand b{color:var(--lime);}
+  .navlinks{display:flex; gap:6px; flex-wrap:wrap; overflow-x:auto;}
+  .navlink{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    color:var(--text-mute); background:var(--panel-2); border:1px solid var(--border);
+    padding:6px 10px; border-radius:6px; white-space:nowrap; text-decoration:none;
+    transition:all .12s ease;
+  }
+  .navlink:hover{color:var(--text); border-color:#333;}
+  .navlink.active{color:#0a0a0a; background:var(--lime); border-color:var(--lime);}
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+
+  .app-nav{
+    margin-top:24px; padding:14px 18px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+  }
+  .app-nav .navlinks{justify-content:flex-start;}
+
+  /* ---------- board (one per nano app) ---------- */
+  .board{
+    padding:56px 0 64px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .board:last-child{border-bottom:none;}
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--lime-dim); color:var(--lime);
+    border:1px solid rgba(182,255,61,0.35);
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:6px 12px; border-radius:5px; margin-bottom:22px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--lime);}
+
+  .board-head{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
+  h1{
+    font-family:'JetBrains Mono',monospace; font-weight:700;
+    font-size:38px; line-height:1.15; letter-spacing:-0.01em;
+    max-width:640px;
+  }
+  .subtitle{
+    color:var(--text-dim); font-size:14px; line-height:1.65;
+    max-width:480px; margin-top:14px;
+  }
+  .board-actions{display:flex; gap:10px; flex-shrink:0;}
+  .btn{
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+    padding:11px 16px; border-radius:7px; cursor:pointer; white-space:nowrap;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn-lime{background:var(--lime); color:#0a0a0a; border:1px solid var(--lime);}
+  .btn-outline{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .btn-outline:hover{border-color:#444;}
+
+  /* stats row */
+  .stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--border); border:1px solid var(--border);
+    border-radius:10px; overflow:hidden; margin-top:32px;
+  }
+  .stat{background:var(--panel); padding:16px 18px;}
+  .stat-top{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .stat-icon{
+    width:18px; height:18px; border-radius:5px; background:var(--lime-dim);
+    display:flex; align-items:center; justify-content:center; color:var(--lime);
+    font-size:10px; font-weight:700; flex-shrink:0;
+  }
+  .stat-icon.red{background:var(--red-dim); color:var(--red);}
+  .stat-label{font-size:10.5px; color:var(--text-mute); text-transform:uppercase; letter-spacing:.06em;}
+  .stat-value{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700;}
+
+  /* ---------- total progress: signature element ---------- */
+  .total-progress{
+    margin-top:28px;
+    background:linear-gradient(180deg, var(--panel), var(--panel-3));
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px 26px 26px;
+  }
+  .total-progress-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+  .total-progress-label{
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+    color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .total-progress-label .dot{width:7px; height:7px; border-radius:50%; background:var(--lime); box-shadow:0 0 8px var(--lime);}
+  .total-progress-value{
+    font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:800; line-height:1;
+    color:var(--lime); text-shadow:0 0 22px rgba(182,255,61,0.45);
+  }
+  .total-progress-sub{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-mute); margin-top:4px; text-align:right;
+  }
+  .total-track{
+    height:30px; border-radius:15px; background:var(--panel-2);
+    border:1px solid var(--border); overflow:hidden; position:relative;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .total-fill{
+    height:100%; border-radius:15px; position:relative;
+    background:linear-gradient(90deg, #86c928, var(--lime) 60%, #d4ff8a);
+    box-shadow:0 0 26px rgba(182,255,61,0.55), 0 0 6px rgba(182,255,61,0.8);
+    transition:width .3s ease;
+    overflow:hidden;
+  }
+  .total-fill::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+    background-size:220% 100%;
+    animation:shine 3.2s ease-in-out infinite;
+  }
+  @keyframes shine{
+    0%{background-position:180% 0;}
+    100%{background-position:-60% 0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .total-fill::after{animation:none;}
+  }
+
+  .board-details{
+    display:grid; grid-template-rows:0fr; opacity:0;
+    transition:grid-template-rows .25s ease, opacity .2s ease;
+  }
+  .board-details.open{grid-template-rows:1fr; opacity:1;}
+  .board-details-inner{overflow:hidden;}
+
+  .split{
+    display:grid; grid-template-columns:220px 1fr; gap:1px;
+    background:var(--border); border:1px solid var(--border);
+    border-radius:10px; overflow:hidden; margin-top:20px;
+  }
+  .sidebar{background:var(--panel); padding:10px;}
+  .sprint-item{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:7px; cursor:pointer;
+    font-size:13px; color:var(--text-mute); position:relative;
+    transition:all .12s ease;
+  }
+  .sprint-item:hover{color:var(--text-dim); background:var(--panel-2);}
+  .sprint-item .flag-dot{width:8px; height:8px; border-radius:50%; border:2px solid var(--text-mute); flex-shrink:0;}
+  .sprint-item.active{color:var(--lime); background:var(--lime-dim);}
+  .sprint-item.active .flag-dot{background:var(--lime); border-color:var(--lime);}
+  .sprint-item .pct{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mute);}
+  .sprint-item.active .pct{color:var(--lime);}
+
+  .main{background:var(--panel-3); padding:24px 26px;}
+  .main-head{display:flex; align-items:center; gap:8px; color:var(--lime); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;}
+  .main-head .flag-dot{width:8px; height:8px; border-radius:50%; background:var(--lime);}
+  .big-stat{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:30px; margin-top:8px;}
+  .main-sub{display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:8px;}
+  .main-sub span{font-size:12.5px; color:var(--text-dim);}
+  .main-sub .right{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mute); text-transform:uppercase; letter-spacing:.05em;}
+
+  /* task rows styled as the reference bars */
+  .task-bars{margin-top:20px; display:flex; flex-direction:column; gap:16px;}
+  .task-row{cursor:pointer;}
+  .task-row-top{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
+  .task-name{font-size:13px; font-weight:500;}
+  .task-name.done{color:var(--text-dim);}
+  .task-tag{
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
+    padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .task-tag.pending{color:var(--text-mute); background:var(--panel-2); border:1px solid var(--border);}
+  .task-tag.progress{color:var(--amber); background:var(--amber-dim); border:1px solid rgba(245,197,66,0.3);}
+  .task-tag.done{color:var(--lime); background:var(--lime-dim); border:1px solid rgba(182,255,61,0.3);}
+  .task-tag.stalled{color:var(--red); background:var(--red-dim); border:1px solid rgba(239,95,95,0.3);}
+  .task-week{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-mute);}
+  .task-track{height:8px; border-radius:4px; background:var(--panel-2); border:1px solid var(--border-soft); overflow:hidden;}
+  .task-fill{height:100%; border-radius:4px; transition:width .18s ease;}
+  .task-fill.pending{width:2%; background:var(--border);}
+  .task-fill.progress{width:50%; background:var(--amber);}
+  .task-fill.done{width:100%; background:var(--lime);}
+  .task-fill.stalled{width:100%; background:repeating-linear-gradient(135deg, var(--red) 0 6px, #7a2c2c 6px 12px);}
+
+  .main-foot{
+    margin-top:18px; padding-top:14px; border-top:1px solid var(--border-soft);
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mute);
+    display:flex; align-items:center; gap:6px;
+  }
+
+  /* footer chips */
+  .chips{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:26px; max-width:420px;}
+  .chip-icon{
+    width:26px; height:26px; border-radius:6px; background:var(--lime);
+    display:flex; align-items:center; justify-content:center; color:#0a0a0a; font-size:12px; font-weight:800;
+    margin-bottom:10px;
+  }
+  .chip-label{font-size:13px; font-weight:600;}
+  .chip-sub{font-size:12px; color:var(--text-mute); margin-top:3px;}
+
+  /* ---------- Vista 1: lista de nano apps ---------- */
+  .applist{display:flex; flex-direction:column; gap:14px; padding:32px 0 60px;}
+  .applist-row{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:22px 26px; cursor:pointer; transition:border-color .15s ease, transform .1s ease;
+  }
+  .applist-row:hover{border-color:#3a3a3a; transform:translateY(-1px);}
+  .applist-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:12px;}
+  .applist-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:19px;}
+  .applist-meta{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mute); margin-top:4px;}
+  .applist-pct{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:22px; color:var(--lime); text-shadow:0 0 16px rgba(182,255,61,0.4); flex-shrink:0;}
+  .applist-track{
+    height:22px; border-radius:11px; background:var(--panel-2); border:1px solid var(--border);
+    overflow:hidden; box-shadow:inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .applist-fill{
+    height:100%; border-radius:11px;
+    background:linear-gradient(90deg, #86c928, var(--lime) 60%, #d4ff8a);
+    box-shadow:0 0 14px rgba(182,255,61,0.5);
+  }
+
+  /* back link inside detail view */
+  .detail-back{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+    color:var(--text-dim); margin-top:28px;
+  }
+  .detail-back:hover{color:var(--lime);}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--lime); color:#0a0a0a; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12.5px;
+    padding:11px 20px; border-radius:8px; opacity:0; pointer-events:none; transition:all .25s ease; z-index:200;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4); white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- admin lock modal ---------- */
+  .lock-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .lock-box{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:28px; width:100%; max-width:340px;
+  }
+  .lock-title{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; margin-bottom:6px;}
+  .lock-sub{font-size:12.5px; color:var(--text-dim); margin-bottom:18px;}
+  .lock-input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px;
+    margin-bottom:10px;
+  }
+  .lock-input.error{border-color:var(--red); animation:shake .25s;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);}
+  }
+  .lock-error{font-size:11.5px; color:var(--red); margin-bottom:10px; min-height:14px;}
+  .lock-actions{display:flex; gap:8px;}
+  .lock-actions .btn{flex:1; justify-content:center;}
+
+  /* ---------- Admin ---------- */
+  .admin-wrap{padding:32px 0 60px; display:flex; flex-direction:column; gap:20px;}
+  .admin-toolbar{display:flex; justify-content:flex-end; gap:10px;}
+  .admin-card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px;}
+  .admin-card-head h3{margin-bottom:0;}
+  .admin-btn-primary{background:var(--lime); color:#0a0a0a; border-color:var(--lime); font-weight:700;}
+  .admin-btn-primary:hover{color:#0a0a0a; filter:brightness(1.08);}
+  .admin-btn-danger{color:var(--red); border-color:rgba(239,95,95,0.3);}
+  .admin-btn-danger:hover{border-color:var(--red); color:var(--red);}
+  .admin-card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px 24px;}
+  .admin-card h3{font-family:'JetBrains Mono',monospace; font-size:16px; margin-bottom:16px; color:var(--lime);}
+  .admin-field{margin-bottom:14px;}
+  .admin-field label{
+    display:block; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-mute);
+    text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;
+  }
+  .admin-field input[type=text], .admin-field textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px;
+  }
+  .admin-field input[type=text]:focus, .admin-field textarea:focus{outline:1px solid var(--lime); border-color:var(--lime);}
+  .admin-field textarea{resize:vertical; min-height:60px; line-height:1.5;}
+  .admin-row-inline{display:flex; gap:16px;}
+  .admin-row-inline .admin-field{flex:1;}
+
+  .admin-sprints{margin-top:18px; border-top:1px solid var(--border-soft); padding-top:16px;}
+  .admin-sprints-head{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .admin-sprints-head .lbl{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mute);
+    text-transform:uppercase; letter-spacing:.06em; margin-right:auto;
+  }
+  .admin-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    padding:6px 10px; border-radius:6px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); cursor:pointer;
+  }
+  .admin-btn:hover{border-color:#444; color:var(--text);}
+  .admin-sprint{background:var(--panel-3); border:1px solid var(--border-soft); border-radius:10px; padding:12px 14px; margin-bottom:10px;}
+  .admin-sprint-head{display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--text-dim); margin-bottom:10px;}
+  .admin-task-row{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
+  .admin-task-row input[type=text]{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:6px 8px; color:var(--text); font-size:12px; font-family:'Inter',sans-serif;
+  }
+  .admin-task-row input.admin-week{width:48px; flex-shrink:0; text-align:center; font-family:'JetBrains Mono',monospace;}
+  .admin-task-row input.admin-task-name{flex:1;}
+  .admin-task-row select{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:6px 8px; color:var(--text); font-size:11px; font-family:'JetBrains Mono',monospace;
+  }
+  .admin-task-row button{
+    flex-shrink:0; background:transparent; border:1px solid var(--border); color:var(--red);
+    border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:12px;
+  }
+  .admin-task-row button:hover{border-color:var(--red);}
+
+  @media (max-width:760px){
+    .split{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    h1{font-size:28px;}
+    .board-head{align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="brand">BAID</div>
+  <a href="#" class="navlink" data-goto-admin>⚙ Admin</a>
+</div>
+
+<div class="wrap">
+  <div class="app-nav"><div class="navlinks" id="navlinks"></div></div>
+  <div id="boards"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+// status: 'pending' | 'progress' | 'done' | 'stalled'
+let nanoApps = [
+  {
+    id:'agenda',
+    name:'Agenda Inteligente',
+    desc:'Agente que confirma, reagenda y recuerda citas por WhatsApp automáticamente.',
+    startDate:'3 jun', dueDate:'12 jul', owner:'Diego', client:'Clínica Rivas',
+    sprints:[
+      { tasks:[
+        {name:'Definir flujo conversacional', week:'S1', status:'done'},
+        {name:'Conectar WhatsApp Business API', week:'S1', status:'done'},
+        {name:'Diseñar mensajes de confirmación', week:'S1', status:'done'},
+        {name:'Pruebas con calendario de prueba', week:'S1', status:'done'},
+      ]},
+      { tasks:[
+        {name:'Integración con Google Calendar', week:'S2', status:'done'},
+        {name:'Lógica de reagendado', week:'S2', status:'done'},
+        {name:'Recordatorios automáticos 24h', week:'S2', status:'progress'},
+        {name:'Manejo de cancelaciones', week:'S2', status:'stalled'},
+      ]},
+      { tasks:[
+        {name:'Reportes de asistencia', week:'S3', status:'pending'},
+        {name:'Panel de citas del día', week:'S3', status:'pending'},
+        {name:'Notificaciones a staff', week:'S3', status:'pending'},
+        {name:'QA con cliente piloto', week:'S3', status:'pending'},
+      ]},
+      { tasks:[
+        {name:'Ajustes post feedback', week:'S4', status:'pending'},
+        {name:'Optimización de prompts', week:'S4', status:'pending'},
+        {name:'Documentación técnica', week:'S4', status:'pending'},
+        {name:'Entrega y capacitación', week:'S4', status:'pending'},
+      ]},
+    ]
+  },
+  {
+    id:'cobranza',
+    name:'Cobranza Automática',
+    desc:'Nano app que da seguimiento a pagos vencidos y negocia planes por chat.',
+    startDate:'12 may', dueDate:'20 jun', owner:'Marisol', client:'Grupo Ferretero MX',
+    sprints:[
+      { tasks:[
+        {name:'Mapear reglas de cobranza', week:'S1', status:'done'},
+        {name:'Conectar base de clientes MySQL', week:'S1', status:'done'},
+        {name:'Definir tono y escalamiento', week:'S1', status:'done'},
+        {name:'Prompt base de cobranza', week:'S1', status:'done'},
+      ]},
+      { tasks:[
+        {name:'Flujo de recordatorio 3-7-15 días', week:'S2', status:'done'},
+        {name:'Generar links de pago', week:'S2', status:'done'},
+        {name:'Negociación de planes', week:'S2', status:'done'},
+        {name:'Registro de promesas de pago', week:'S2', status:'done'},
+      ]},
+      { tasks:[
+        {name:'Dashboard de cartera vencida', week:'S3', status:'done'},
+        {name:'Alertas a cobranza humana', week:'S3', status:'progress'},
+        {name:'Integración con Make', week:'S3', status:'progress'},
+        {name:'Pruebas de casos límite', week:'S3', status:'pending'},
+      ]},
+      { tasks:[
+        {name:'Revisión legal de mensajes', week:'S4', status:'stalled'},
+        {name:'Reporte semanal automático', week:'S4', status:'pending'},
+        {name:'Ajuste de reglas por cliente', week:'S4', status:'pending'},
+        {name:'Go-live', week:'S4', status:'pending'},
+      ]},
+      { tasks:[
+        {name:'Monitoreo post lanzamiento', week:'S5', status:'pending'},
+        {name:'Ajustes de conversión', week:'S5', status:'pending'},
+        {name:'Documentación final', week:'S5', status:'pending'},
+        {name:'Handoff a cliente', week:'S5', status:'pending'},
+      ]},
+    ]
+  },
+  {
+    id:'soporte',
+    name:'Soporte WhatsApp',
+    desc:'Agente de primer nivel que resuelve dudas frecuentes y escala a humano.',
+    startDate:'1 jul', dueDate:'22 jul', owner:'Diego', client:'Escuela Vive',
+    sprints:[
+      { tasks:[
+        {name:'Levantamiento de FAQs', week:'S1', status:'done'},
+        {name:'Estructura de base de conocimiento', week:'S1', status:'done'},
+        {name:'Configurar WhatsApp Business API', week:'S1', status:'done'},
+        {name:'Prompt de bienvenida', week:'S1', status:'progress'},
+      ]},
+      { tasks:[
+        {name:'Clasificador de intenciones', week:'S2', status:'progress'},
+        {name:'Respuestas dinámicas por categoría', week:'S2', status:'pending'},
+        {name:'Escalamiento a agente humano', week:'S2', status:'pending'},
+        {name:'Registro de conversaciones', week:'S2', status:'pending'},
+      ]},
+      { tasks:[
+        {name:'Métricas de resolución', week:'S3', status:'pending'},
+        {name:'Ajuste de tono de marca', week:'S3', status:'pending'},
+        {name:'Pruebas con usuarios reales', week:'S3', status:'pending'},
+        {name:'Entrega final', week:'S3', status:'pending'},
+      ]},
+    ]
+  },
+];
+
+// ---------- PERSISTENCIA (API + base de datos) ----------
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ saveToServer(); }, 700);
+}
+async function saveToServer(){
+  if(!sessionPassword) return false; // no hay sesión admin activa, no intenta guardar
+  try{
+    const r = await fetch('/api/data', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password: sessionPassword, data: nanoApps })
+    });
+    return r.ok;
+  } catch(e){
+    console.warn('No se pudo guardar en el servidor', e);
+    return false;
+  }
+}
+async function loadFromServer(){
+  try{
+    const r = await fetch('/api/data');
+    if(r.ok){
+      const json = await r.json();
+      if(Array.isArray(json) && json.length) nanoApps = json;
+    }
+  } catch(e){
+    console.warn('No se pudo cargar del servidor, usando datos por defecto', e);
+  }
+  renderMain();
+}
+
+// ---------- STATE ----------
+let adminUnlocked = false;
+let sessionPassword = null; // solo en memoria, nunca se guarda ni se manda a nadie más que a /api
+const activeSprint = {}; // { appId: index }
+const expanded = {}; // { appId: bool }
+let currentView = 'list'; // 'list' | 'detail'
+let currentAppId = null;
+const STATUS_ORDER = ['pending','progress','done','stalled'];
+const STATUS_LABEL = { pending:'No realizado', progress:'En proceso', done:'Terminada', stalled:'No realizada' };
+
+// ---------- HELPERS ----------
+function pct(sprint){
+  const done = sprint.tasks.filter(t=>t.status==='done').length;
+  return Math.round((done/sprint.tasks.length)*100);
+}
+function appAllTasks(app){ return app.sprints.flatMap(s=>s.tasks); }
+function appPct(app){
+  const all = appAllTasks(app);
+  const done = all.filter(t=>t.status==='done').length;
+  return Math.round((done/all.length)*100);
+}
+function currentSprintIndex(app){
+  const idx = app.sprints.findIndex(s=>pct(s) < 100);
+  return idx === -1 ? app.sprints.length-1 : idx;
+}
+function nextStatus(s){
+  const i = STATUS_ORDER.indexOf(s);
+  return STATUS_ORDER[(i+1) % STATUS_ORDER.length];
+}
+
+// ---------- RENDER ----------
+function renderNav(){
+  document.getElementById('navlinks').innerHTML = nanoApps.map(a=>`
+    <a href="#" class="navlink ${currentView==='detail' && currentAppId===a.id ? 'active':''}" data-nav="${a.id}">${a.name}</a>
+  `).join('');
+}
+
+function renderListView(){
+  return `
+    <div class="applist">
+      ${nanoApps.map(app=>{
+        const all = appAllTasks(app);
+        const done = all.filter(t=>t.status==='done').length;
+        return `
+          <div class="applist-row" data-open="${app.id}">
+            <div class="applist-top">
+              <div>
+                <div class="applist-name">${app.name}</div>
+                <div class="applist-meta">${done}/${all.length} tareas · ${app.sprints.length} sprints</div>
+              </div>
+              <div class="applist-pct">${appPct(app)}%</div>
+            </div>
+            <div class="applist-track"><div class="applist-fill" style="width:${appPct(app)}%"></div></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderBoard(app){
+  if(activeSprint[app.id] === undefined) activeSprint[app.id] = currentSprintIndex(app);
+  const si = activeSprint[app.id];
+  const sprint = app.sprints[si];
+  const all = appAllTasks(app);
+  const stalledCount = all.filter(t=>t.status==='stalled').length;
+  const progressCount = all.filter(t=>t.status==='progress').length;
+
+  const sidebarItems = app.sprints.map((s,i)=>`
+    <div class="sprint-item ${i===si?'active':''}" data-app="${app.id}" data-sprint="${i}">
+      <span class="flag-dot"></span> Sprint ${i+1} <span class="pct mono">${pct(s)}%</span>
+    </div>
+  `).join('');
+
+  const taskRows = sprint.tasks.map((t,ti)=>`
+    <div class="task-row" data-app="${app.id}" data-sprint="${si}" data-task="${ti}">
+      <div class="task-row-top">
+        <div class="task-name ${t.status==='done'?'done':''}">${t.name}</div>
+        <div class="task-tag ${t.status}">${STATUS_LABEL[t.status]}</div>
+        <div class="task-week">${t.week}</div>
+      </div>
+      <div class="task-track"><div class="task-fill ${t.status}"></div></div>
+    </div>
+  `).join('');
+
+  return `
+    <section class="board" id="board-${app.id}">
+      <div class="eyebrow"><span class="dot"></span> Nano App</div>
+
+      <div class="board-head">
+        <div>
+          <h1>${app.name}</h1>
+          <p class="subtitle">${app.desc}</p>
+        </div>
+        <div class="board-actions">
+          <button class="btn btn-lime" data-toggle="${app.id}">${expanded[app.id] ? 'Ocultar sprint activo ↑' : 'Ver sprint activo ↓'}</button>
+        </div>
+      </div>
+
+      <div class="total-progress">
+        <div class="total-progress-top">
+          <div>
+            <div class="total-progress-label"><span class="dot"></span> Avance total de la nano app</div>
+            <div class="total-progress-sub" style="text-align:left; margin-top:2px;">${all.filter(t=>t.status==='done').length}/${all.length} tareas completadas</div>
+          </div>
+          <div class="total-progress-value">${appPct(app)}%</div>
+        </div>
+        <div class="total-track"><div class="total-fill" style="width:${appPct(app)}%"></div></div>
+      </div>
+
+      <div class="board-details ${expanded[app.id] ? 'open' : ''}">
+        <div class="board-details-inner">
+        <div class="split">
+          <div class="sidebar">${sidebarItems}</div>
+          <div class="main">
+            <div class="main-head"><span class="flag-dot"></span> Sprint ${si+1}</div>
+            <div class="big-stat">${pct(sprint)}% completado</div>
+            <div class="main-sub">
+              <span>${sprint.tasks.filter(t=>t.status==='done').length}/${sprint.tasks.length} tareas de este sprint · ${progressCount} en proceso</span>
+              <span class="right">Meta 100%</span>
+            </div>
+            <div class="task-bars">${taskRows}</div>
+            <div class="main-foot">Cliente: ${app.client} · Responsable: ${app.owner} — clic en una tarea para cambiar su estado</div>
+          </div>
+        </div>
+
+        <div class="chips">
+          <div>
+            <div class="chip-icon">▸</div>
+            <div class="chip-label">Inicio</div>
+            <div class="chip-sub">${app.startDate}</div>
+          </div>
+          <div>
+            <div class="chip-icon">◆</div>
+            <div class="chip-label">Entrega estimada</div>
+            <div class="chip-sub">${app.dueDate}</div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderAdminView(){
+  return `
+    <div class="admin-wrap">
+      <div class="detail-back" data-back>← Todas las nano apps</div>
+
+      <div class="admin-toolbar">
+        <button class="admin-btn" data-add-app>+ Nueva nano app</button>
+        <button class="admin-btn admin-btn-primary" data-save-now>💾 Guardar cambios</button>
+      </div>
+
+      ${nanoApps.map(app=>`
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <h3>${app.name || 'Sin nombre'}</h3>
+            <button class="admin-btn admin-btn-danger" data-delete-app="${app.id}">Eliminar</button>
+          </div>
+
+          <div class="admin-field">
+            <label>Nombre de la nano app</label>
+            <input type="text" data-field="name" data-app="${app.id}" value="${app.name}">
+          </div>
+
+          <div class="admin-field">
+            <label>Descripción</label>
+            <textarea data-field="desc" data-app="${app.id}">${app.desc}</textarea>
+          </div>
+
+          <div class="admin-row-inline">
+            <div class="admin-field">
+              <label>Inicio</label>
+              <input type="text" data-field="startDate" data-app="${app.id}" value="${app.startDate}">
+            </div>
+            <div class="admin-field">
+              <label>Entrega estimada</label>
+              <input type="text" data-field="dueDate" data-app="${app.id}" value="${app.dueDate}">
+            </div>
+          </div>
+
+          <div class="admin-sprints">
+            <div class="admin-sprints-head">
+              <span class="lbl">Sprints (${app.sprints.length})</span>
+              <button class="admin-btn" data-add-sprint="${app.id}">+ sprint</button>
+              <button class="admin-btn" data-remove-sprint="${app.id}">– quitar último</button>
+            </div>
+
+            ${app.sprints.map((s,si)=>`
+              <div class="admin-sprint">
+                <div class="admin-sprint-head">
+                  <span>Sprint ${si+1}</span>
+                  <button class="admin-btn" data-add-task="${app.id}" data-sprint="${si}">+ tarea</button>
+                </div>
+                ${s.tasks.map((t,ti)=>`
+                  <div class="admin-task-row">
+                    <input type="text" class="admin-task-name" data-field="taskName" data-app="${app.id}" data-sprint="${si}" data-task="${ti}" value="${t.name}">
+                    <input type="text" class="admin-week" data-field="taskWeek" data-app="${app.id}" data-sprint="${si}" data-task="${ti}" value="${t.week}">
+                    <button data-remove-task="${app.id}" data-sprint="${si}" data-task="${ti}">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderMain(){
+  const container = document.getElementById('boards');
+  if(currentView === 'list'){
+    container.innerHTML = renderListView();
+  } else if(currentView === 'admin'){
+    container.innerHTML = renderAdminView();
+  } else {
+    const app = nanoApps.find(a=>a.id===currentAppId);
+    container.innerHTML = `<div class="detail-back" data-back>← Todas las nano apps</div>` + renderBoard(app);
+  }
+  renderNav();
+}
+
+function openDetail(id){
+  currentView = 'detail';
+  currentAppId = id;
+  expanded[id] = true; // vista 2: entra directo con el sprint activo visible
+  renderMain();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ---------- Admin lock modal ----------
+function showLockModal(){
+  const div = document.createElement('div');
+  div.className = 'lock-overlay';
+  div.id = 'lockOverlay';
+  div.innerHTML = `
+    <div class="lock-box">
+      <div class="lock-title">Acceso al admin</div>
+      <div class="lock-sub">Ingresa la contraseña para editar las nano apps.</div>
+      <input type="password" class="lock-input" id="lockInput" placeholder="Contraseña" autofocus>
+      <div class="lock-error" id="lockError"></div>
+      <div class="lock-actions">
+        <button class="btn btn-outline" data-lock-cancel>Cancelar</button>
+        <button class="btn btn-lime" data-lock-submit>Entrar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+  const input = document.getElementById('lockInput');
+  input.focus();
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptUnlock(); });
+}
+function closeLockModal(){
+  const el = document.getElementById('lockOverlay');
+  if(el) el.remove();
+}
+async function attemptUnlock(){
+  const input = document.getElementById('lockInput');
+  const submitBtn = document.querySelector('[data-lock-submit]');
+  const pw = input.value;
+  if(submitBtn) submitBtn.disabled = true;
+
+  let ok = false;
+  try{
+    const r = await fetch('/api/auth', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    if(r.ok){ const j = await r.json(); ok = !!j.ok; }
+  } catch(e){
+    console.warn('No se pudo verificar la contraseña', e);
+  }
+
+  if(submitBtn) submitBtn.disabled = false;
+
+  if(ok){
+    sessionPassword = pw;
+    adminUnlocked = true;
+    closeLockModal();
+    currentView = 'admin';
+    currentAppId = null;
+    renderMain();
+    window.scrollTo({top:0, behavior:'instant'});
+  } else {
+    input.classList.add('error');
+    document.getElementById('lockError').textContent = 'Contraseña incorrecta.';
+    input.value = '';
+    input.focus();
+    setTimeout(()=>input.classList.remove('error'), 300);
+  }
+}
+
+// ---------- Toast ----------
+let toastTimer = null;
+function showToast(msg){
+  let toast = document.getElementById('toast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  requestAnimationFrame(()=>toast.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove('show'), 2400);
+}
+
+// ---------- EVENTS ----------
+document.addEventListener('click', async (e)=>{
+  const applistRow = e.target.closest('.applist-row');
+  if(applistRow){
+    openDetail(applistRow.dataset.open);
+    return;
+  }
+  const navBtn = e.target.closest('[data-nav]');
+  if(navBtn){
+    e.preventDefault();
+    openDetail(navBtn.dataset.nav);
+    return;
+  }
+  const adminBtn = e.target.closest('[data-goto-admin]');
+  if(adminBtn){
+    e.preventDefault();
+    if(adminUnlocked){
+      currentView = 'admin';
+      currentAppId = null;
+      renderMain();
+      window.scrollTo({top:0, behavior:'instant'});
+    } else {
+      showLockModal();
+    }
+    return;
+  }
+  const lockCancel = e.target.closest('[data-lock-cancel]');
+  if(lockCancel){
+    closeLockModal();
+    return;
+  }
+  const lockSubmit = e.target.closest('[data-lock-submit]');
+  if(lockSubmit){
+    attemptUnlock();
+    return;
+  }
+  const backBtn = e.target.closest('[data-back]');
+  if(backBtn){
+    currentView = 'list';
+    currentAppId = null;
+    renderMain();
+    window.scrollTo({top:0, behavior:'instant'});
+    return;
+  }
+  const sprintItem = e.target.closest('.sprint-item');
+  if(sprintItem){
+    activeSprint[sprintItem.dataset.app] = parseInt(sprintItem.dataset.sprint);
+    renderMain();
+    return;
+  }
+  const taskRow = e.target.closest('.task-row');
+  if(taskRow){
+    const app = nanoApps.find(a=>a.id===taskRow.dataset.app);
+    const sprint = app.sprints[parseInt(taskRow.dataset.sprint)];
+    const t = sprint.tasks[parseInt(taskRow.dataset.task)];
+    t.status = nextStatus(t.status);
+    renderMain();
+    scheduleSave();
+    return;
+  }
+  const toggleBtn = e.target.closest('[data-toggle]');
+  if(toggleBtn){
+    const id = toggleBtn.dataset.toggle;
+    expanded[id] = !expanded[id];
+    renderMain();
+    return;
+  }
+
+  // ---- admin: agregar / quitar sprints y tareas ----
+  const addSprintBtn = e.target.closest('[data-add-sprint]');
+  if(addSprintBtn){
+    const app = nanoApps.find(a=>a.id===addSprintBtn.dataset.addSprint);
+    app.sprints.push({ tasks:[
+      {name:'Nueva tarea', week:'S'+(app.sprints.length+1), status:'pending'}
+    ]});
+    renderMain();
+    scheduleSave();
+    return;
+  }
+  const removeSprintBtn = e.target.closest('[data-remove-sprint]');
+  if(removeSprintBtn){
+    const app = nanoApps.find(a=>a.id===removeSprintBtn.dataset.removeSprint);
+    if(app.sprints.length > 1) app.sprints.pop();
+    renderMain();
+    scheduleSave();
+    return;
+  }
+  const addTaskBtn = e.target.closest('[data-add-task]');
+  if(addTaskBtn){
+    const app = nanoApps.find(a=>a.id===addTaskBtn.dataset.addTask);
+    const sprint = app.sprints[parseInt(addTaskBtn.dataset.sprint)];
+    sprint.tasks.push({name:'Nueva tarea', week:'S'+(parseInt(addTaskBtn.dataset.sprint)+1), status:'pending'});
+    renderMain();
+    scheduleSave();
+    return;
+  }
+  const removeTaskBtn = e.target.closest('[data-remove-task]');
+  if(removeTaskBtn){
+    const app = nanoApps.find(a=>a.id===removeTaskBtn.dataset.removeTask);
+    const sprint = app.sprints[parseInt(removeTaskBtn.dataset.sprint)];
+    if(sprint.tasks.length > 1) sprint.tasks.splice(parseInt(removeTaskBtn.dataset.task), 1);
+    renderMain();
+    scheduleSave();
+    return;
+  }
+
+  const saveNowBtn = e.target.closest('[data-save-now]');
+  if(saveNowBtn){
+    saveNowBtn.disabled = true;
+    clearTimeout(saveTimer); // cancela el guardado automático pendiente, ya lo hacemos ahora
+    const ok = await saveToServer();
+    saveNowBtn.disabled = false;
+    showToast(ok ? '✓ Cambios guardados' : '✗ No se pudo guardar, intenta de nuevo');
+    return;
+  }
+
+  // ---- admin: crear / eliminar nano app ----
+  const addAppBtn = e.target.closest('[data-add-app]');
+  if(addAppBtn){
+    const newId = 'app-' + Date.now();
+    nanoApps.push({
+      id:newId,
+      name:'Nueva nano app',
+      desc:'',
+      startDate:'',
+      dueDate:'',
+      owner:'',
+      client:'',
+      sprints:[
+        { tasks:[ {name:'Nueva tarea', week:'S1', status:'pending'} ] }
+      ]
+    });
+    renderMain();
+    scheduleSave();
+    const card = document.querySelector(`[data-app="${newId}"][data-field="name"]`);
+    if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); card.focus(); }
+    return;
+  }
+  const deleteAppBtn = e.target.closest('[data-delete-app]');
+  if(deleteAppBtn){
+    const id = deleteAppBtn.dataset.deleteApp;
+    const app = nanoApps.find(a=>a.id===id);
+    if(confirm(`¿Eliminar "${app.name || 'esta nano app'}"? Esta acción no se puede deshacer.`)){
+      const idx = nanoApps.findIndex(a=>a.id===id);
+      nanoApps.splice(idx,1);
+      renderMain();
+      scheduleSave();
+    }
+  }
+});
+
+// ---- admin: editar texto en vivo (sin re-render, para no perder el foco) ----
+document.addEventListener('input', (e)=>{
+  const t = e.target;
+  const field = t.dataset.field;
+  if(!field) return;
+  const app = nanoApps.find(a=>a.id===t.dataset.app);
+  if(!app) return;
+
+  if(field === 'name'){
+    app.name = t.value;
+    const h3 = t.closest('.admin-card').querySelector('h3');
+    if(h3) h3.textContent = t.value;
+  }
+  else if(field === 'desc') app.desc = t.value;
+  else if(field === 'startDate') app.startDate = t.value;
+  else if(field === 'dueDate') app.dueDate = t.value;
+  else if(field === 'taskName'){
+    app.sprints[parseInt(t.dataset.sprint)].tasks[parseInt(t.dataset.task)].name = t.value;
+  } else if(field === 'taskWeek'){
+    app.sprints[parseInt(t.dataset.sprint)].tasks[parseInt(t.dataset.task)].week = t.value;
+  }
+  scheduleSave();
+});
+
+renderMain();      // pintado inicial instantáneo con datos por defecto
+loadFromServer();  // trae los datos reales guardados en el servidor (si hay)
+</script>
+</body>
+</html>
